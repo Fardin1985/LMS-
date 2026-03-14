@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+</head>
+<body>
+    <h1>Socket Test</h1>
+    <script>
+        // Connect to your server
+        const socket = io("http://localhost:3000");
+
+        socket.on("connect", () => {
+            console.log("Connected with ID:", socket.id);
+        });
+    </script>
+</body>
+</html>

@@ -3,31 +3,30 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Helper: Generate JWT Token and set cookie
 const generateToken = (res, user, message) => {
-  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'secret_key', {
+  // 1. 👇 Use 'userId' instead of 'id' to match your req.id in controllers
+  const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
     expiresIn: '1d',
   });
 
-  // Set JWT cookie
- res.cookie("token", token, {
+  res.cookie("token", token, {
     httpOnly: true,
-    sameSite: "none", // 👈 Required for cross-site cookies
-    secure: true,     // 👈 Required for SameSite=None
-    maxAge: 24 * 60 * 60 * 1000
-});
-
-  // Send the final response to the frontend
+    sameSite: "none",
+    secure: true,
+    path: "/", // ✅ add this
+    maxAge: 24 * 60 * 60 * 1000,
+  });
+  // 3. Return the full user object (including photoUrl) so Redux stays updated
   return res.status(200).json({
     success: true,
-    message: message || `Welcome back, ${user.name}`, // Uses the custom message or defaults to "Welcome back"
+    message: message || `Welcome back, ${user.name}`,
     user: {
       _id: user._id,
       name: user.name,
       email: user.email,
       role: user.role,
-    },
-    token
+      photoUrl: user.photoUrl, // 👈 Added this for your dashboard!
+    }
   });
 };
 

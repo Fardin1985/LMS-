@@ -20,12 +20,11 @@ connectDB();
 const app = express();
 const httpServer = createServer(app);
 
-// --- SOCKET.IO CONFIG ---
 const io = new Server(httpServer, {
   cors: {
-    origin: 'http://localhost:5173', // Matched to your frontend
+    origin: ["http://localhost:5173", "https://lms-lac-zeta.vercel.app"],
     methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true
+    credentials: true,
   },
 });
 

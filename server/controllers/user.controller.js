@@ -84,26 +84,26 @@ export const loginUser = async (req, res) => {
     });
   }
 };
-
-// @desc    Logout user
-// @route   POST /api/users/logout
 export const logoutUser = async (req, res) => {
   try {
-    return res.status(200)
-      .cookie("token", "", { maxAge: 0 })
+    return res
+      .status(200)
+      .cookie("token", "", { 
+        httpOnly: true, 
+        sameSite: "none", 
+        secure: true, 
+        path: "/", // 👈 MUST MATCH generateToken.js
+        maxAge: 0  // 👈 Kills the cookie
+      })
       .json({
         message: "Logged out successfully.",
         success: true
       });
   } catch (error) {
     console.log(error);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to logout"
-    });
+    return res.status(500).json({ success: false, message: "Failed to logout" });
   }
 };
-
 // @desc    Get user profile
 // @route   GET /api/users/profile
 export const getUserProfile = async (req, res) => {
@@ -162,10 +162,10 @@ export const updateProfile = async (req, res) => {
 
       // Upload the new photo to Cloudinary
       const cloudResponse = await uploadMedia(profilePhoto);
-      
+
       // Save the new Cloudinary URL and Public ID to the database
       user.photoUrl = cloudResponse.secure_url;
-      user.photoId = cloudResponse.public_id; 
+      user.photoId = cloudResponse.public_id;
     }
 
     // Save the updated user document to MongoDB

@@ -4,7 +4,10 @@ import { userLoggedIn, userLoggedOut, userUpdated } from "../authslice";
 export const authApi = createApi({
   reducerPath: "authApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: "https://lms-z693.onrender.com/api/users/",
+    // 👇 If we are in local dev, use localhost. If in production, use Render.
+    baseUrl: import.meta.env.MODE === 'development'
+      ? "http://localhost:5000/api/users/"
+      : "https://lms-z693.onrender.com/api/users/",
     credentials: "include",
   }),
   // 1. 👇 Define a tag for our user data
@@ -39,16 +42,17 @@ export const authApi = createApi({
         url: "logout",
         method: "GET",
       }),
-      // 2. 👇 Destroy the cached user data when they log out!
-      invalidatesTags: ["User"],
+      // 🛑 1. DELETE THE invalidatesTags LINE COMPLETELY
+
       async onQueryStarted(arg, { queryFulfilled, dispatch }) {
         try {
           await queryFulfilled;
           dispatch(userLoggedOut());
+          // 👇 2. Add this: Force RTK Query to wipe all cached profile data!
+          dispatch(authApi.util.resetApiState());
         } catch (error) { }
       },
     }),
-
     getProfile: builder.query({
       query: () => ({
         url: "profile",

@@ -18,7 +18,7 @@ const EditLectureDialog = ({ isOpen, onClose, courseId, lecture }) => {
     const [notesFile, setNotesFile] = useState(null);
     const [isPreviewFree, setIsPreviewFree] = useState(false);
 
-   const [editLecture, { isLoading, isSuccess, reset }] = useEditLectureMutation();
+    const [editLecture, { isLoading, isSuccess, reset }] = useEditLectureMutation();
 
     // Pre-fill data when dialog opens
     useEffect(() => {
@@ -37,7 +37,7 @@ const EditLectureDialog = ({ isOpen, onClose, courseId, lecture }) => {
         }
     }, [isOpen, lecture]);
 
-   useEffect(() => {
+    useEffect(() => {
         if (isSuccess) {
             toast.success("Lecture updated successfully!");
             onClose();
@@ -71,8 +71,8 @@ const EditLectureDialog = ({ isOpen, onClose, courseId, lecture }) => {
                 <DialogHeader>
                     <DialogTitle>Edit Lecture</DialogTitle>
                     {/* 👇 Radix UI will now read this perfectly because it's imported! */}
-                    <DialogDescription className="hidden">
-                        Update lecture details.
+                    <DialogDescription>
+                        Make changes to your lecture here. Click save when you're done.
                     </DialogDescription>
                 </DialogHeader>
 

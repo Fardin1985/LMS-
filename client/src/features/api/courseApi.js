@@ -3,11 +3,14 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 export const courseApi = createApi({
   reducerPath: "courseApi",
   baseQuery: fetchBaseQuery({
-   baseUrl: "https://lms-z693.onrender.com/api/v1/course",
+    // 👇 Dynamically switch between local and live server!
+    baseUrl: import.meta.env.MODE === 'development' 
+        ? "http://localhost:5000/api/v1/course" 
+        : "https://lms-z693.onrender.com/api/v1/course",
     credentials: "include",
   }),
-  // 👇 FIXED: Added "CourseLectures" to the main tagTypes array!
-  tagTypes: ["Course", "CourseLectures"], 
+  // 👇 Added "EnrolledCourses" tag so the dashboard auto-updates!
+  tagTypes: ["Course", "CourseLectures", "EnrolledCourses"], 
 
   endpoints: (builder) => ({
 
@@ -31,11 +34,11 @@ export const courseApi = createApi({
       providesTags: ["Course"],
     }),
 
-  editCourse: builder.mutation({
-      query: ({ courseId, data }) => ({ // 👈 Changed 'formData' to 'data'
+    editCourse: builder.mutation({
+      query: ({ courseId, data }) => ({
         url: `/${courseId}`,
         method: "PUT",
-        body: data,                   // 👈 Changed 'formData' to 'data'
+        body: data,                   
       }),
       invalidatesTags: ["Course"],
     }),
@@ -63,21 +66,23 @@ export const courseApi = createApi({
       }),
       providesTags: ["Course"],
     }),
-    // Add this right under getCourseById
+
     enrollCourse: builder.mutation({
       query: (courseId) => ({
         url: `/${courseId}/enroll`,
         method: "POST",
       }),
-      // Invalidate so the UI instantly updates the button to "Enrolled"
-      invalidatesTags: ["Course", "User"], 
+      // 👇 Invalidates EnrolledCourses so Dashboard updates instantly!
+      invalidatesTags: ["Course", "EnrolledCourses"], 
     }),
+
+    // 👈 FIXED TYPO: Changed etEnrolledCourses to getEnrolledCourses
     getEnrolledCourses: builder.query({
       query: () => ({
-        url: "/enrolled-courses",
+        url: "/enrolled-courses", 
         method: "GET",
       }),
-      providesTags: ["Course", "User"], 
+      providesTags: ["EnrolledCourses"], // 👈 Attaches the tag to this query
     }),
 
     // ----------------------------------------------------
@@ -86,12 +91,10 @@ export const courseApi = createApi({
 
     createLecture: builder.mutation({
       query: ({ courseId, lectureTitle }) => ({
-        // 👇 Uses ../ to escape the /course base URL if your backend uses /api/v1/lecture
         url: `../lecture/${courseId}`, 
         method: "POST",
         body: { lectureTitle },
       }),
-      // 👇 Invalidates BOTH so the Course Detail page updates instantly!
       invalidatesTags: ["CourseLectures", "Course"], 
     }),
 
@@ -131,5 +134,5 @@ export const {
   useEditLectureMutation,
   useRemoveLectureMutation,
   useEnrollCourseMutation,
-  useGetEnrolledCoursesQuery
+  useGetEnrolledCoursesQuery, // 👈 Successfully exported!
 } = courseApi;

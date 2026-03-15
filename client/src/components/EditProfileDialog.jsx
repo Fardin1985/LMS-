@@ -54,12 +54,12 @@ const EditProfileDialog = ({ open, setOpen }) => {
 
             // ✅ Real backend call! (RTK Query handles Redux updates automatically in the background)
             await updateProfile(formData).unwrap();
-            
+
             toast.success("Profile updated successfully!");
             setOpen(false); // Close the modal automatically
         } catch (error) {
             toast.error(error?.data?.message || "Failed to update profile");
-        } 
+        }
         // No finally block needed here because RTK Query handles isLoading automatically!
     };
 
@@ -68,8 +68,8 @@ const EditProfileDialog = ({ open, setOpen }) => {
             <DialogContent className="sm:max-w-[425px] dark:bg-[#020817] border-gray-200 dark:border-gray-800">
                 <DialogHeader>
                     <DialogTitle className="text-xl font-bold">Edit Profile</DialogTitle>
-                    <DialogDescription className="text-gray-500 dark:text-gray-400">
-                        Make changes to your profile here. Click save when you're done.
+                    <DialogDescription>
+                        Update your profile information here. Click save when you're done.
                     </DialogDescription>
                 </DialogHeader>
 

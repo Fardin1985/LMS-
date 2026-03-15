@@ -57,19 +57,21 @@ const Navbar = () => {
         setTheme(theme === "light" ? "dark" : "light");
     };
 
-    const logoutHandler = async () => {
-        try {
-            await logoutUser().unwrap();
-            
-            // 👇 The Fix: Force the browser to completely reload the home page
-            // This destroys Redux cache and forces a fresh state next time they log in.
-            window.location.href = "/"; 
-            
-        } catch (error) {
-            toast.error("Failed to log out");
-        }
-    };
+   const logoutHandler = async () => {
+    try {
+      await logoutUser().unwrap();
+      dispatch(userLoggedOut());
 
+      // 👇 Add a tiny 100ms delay to let the browser process the deleted cookie 
+      // before redirecting to the login page
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 100);
+
+    } catch (error) {
+      toast.error("Failed to log out");
+    }
+  };
     return (
         <>
             <div className="h-16 dark:bg-[#020817] bg-white border-b dark:border-b-gray-800 border-b-gray-200 fixed top-0 left-0 right-0 transition-colors duration-300 z-50 shadow-sm">

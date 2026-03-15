@@ -3,7 +3,7 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 export const courseApi = createApi({
   reducerPath: "courseApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: "http://localhost:5000/api/v1/course",
+   baseUrl: "https://lms-z693.onrender.com/api/v1/course",
     credentials: "include",
   }),
   // 👇 FIXED: Added "CourseLectures" to the main tagTypes array!

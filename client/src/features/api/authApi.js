@@ -4,14 +4,14 @@ import { userLoggedIn, userLoggedOut, userUpdated } from "../authslice";
 export const authApi = createApi({
   reducerPath: "authApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: "http://localhost:5000/api/users/",
-    credentials: "include", 
+    baseUrl: "https://lms-z693.onrender.com/api/users/",
+    credentials: "include",
   }),
   // 1. 👇 Define a tag for our user data
-  tagTypes: ["User"], 
-  
+  tagTypes: ["User"],
+
   endpoints: (builder) => ({
-    
+
     registerUser: builder.mutation({
       query: (userData) => ({
         url: "register",
@@ -30,22 +30,22 @@ export const authApi = createApi({
         try {
           const { data } = await queryFulfilled;
           dispatch(userLoggedIn({ user: data.user }));
-        } catch (error) {}
+        } catch (error) { }
       },
     }),
 
     logoutUser: builder.mutation({
       query: () => ({
         url: "logout",
-        method: "GET", 
+        method: "GET",
       }),
       // 2. 👇 Destroy the cached user data when they log out!
-      invalidatesTags: ["User"], 
+      invalidatesTags: ["User"],
       async onQueryStarted(arg, { queryFulfilled, dispatch }) {
         try {
           await queryFulfilled;
           dispatch(userLoggedOut());
-        } catch (error) {}
+        } catch (error) { }
       },
     }),
 
@@ -55,11 +55,11 @@ export const authApi = createApi({
         method: "GET",
       }),
       // 3. 👇 Attach the tag to the fetched profile
-      providesTags: ["User"], 
+      providesTags: ["User"],
       async onQueryStarted(arg, { queryFulfilled, dispatch }) {
         try {
           const { data } = await queryFulfilled;
-          dispatch(userLoggedIn({ user: data.user })); 
+          dispatch(userLoggedIn({ user: data.user }));
         } catch (error) {
           dispatch(userLoggedOut());
         }
@@ -73,12 +73,12 @@ export const authApi = createApi({
         body: formData,
       }),
       // 4. 👇 Force RTK Query to fetch fresh data in the background after an update!
-      invalidatesTags: ["User"], 
+      invalidatesTags: ["User"],
       async onQueryStarted(arg, { queryFulfilled, dispatch }) {
         try {
           const { data } = await queryFulfilled;
-          dispatch(userUpdated(data.user)); 
-        } catch (error) {}
+          dispatch(userUpdated(data.user));
+        } catch (error) { }
       },
     }),
   }),
@@ -88,6 +88,6 @@ export const {
   useRegisterUserMutation,
   useLoginUserMutation,
   useLogoutUserMutation,
-  useGetProfileQuery, 
-  useUpdateProfileMutation, 
+  useGetProfileQuery,
+  useUpdateProfileMutation,
 } = authApi;

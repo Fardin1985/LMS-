@@ -39,48 +39,15 @@ import AddLectureDialog from "../instructor/AddLectureDialog";
 import EditLectureDialog from "../instructor/EditLectureDialog";
 
 const NAVBAR_HEIGHT = 64;
+const extractYouTubeId = (url) => {
+  if (!url || typeof url !== "string") return null;
 
-const extractYouTubeId = (rawUrl) => {
-  if (!rawUrl || typeof rawUrl !== "string") return null;
+  // This looks for any YouTube URL variation and grabs the 11-character ID
+  const regExp = /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|shorts\/|live\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  const match = url.match(regExp);
 
-  const url = rawUrl.trim();
-
-  if (/^[a-zA-Z0-9_-]{11}$/.test(url)) return url;
-
-  const normalized = /^https?:\/\//i.test(url) ? url : `https://${url}`;
-
-  try {
-    const u = new URL(normalized);
-    const host = u.hostname.replace(/^www\./, "").toLowerCase();
-
-    if (host === "youtu.be") {
-      const id = u.pathname.split("/").filter(Boolean)[0];
-      return /^[a-zA-Z0-9_-]{11}$/.test(id) ? id : null;
-    }
-
-    const isYouTubeHost =
-      host === "youtube.com" ||
-      host.endsWith(".youtube.com");
-
-    if (!isYouTubeHost) return null;
-
-    const v = u.searchParams.get("v");
-    if (v && /^[a-zA-Z0-9_-]{11}$/.test(v)) return v;
-
-    const parts = u.pathname.split("/").filter(Boolean);
-    const markers = new Set(["embed", "shorts", "live", "v", "e"]);
-    for (let i = 0; i < parts.length - 1; i++) {
-      if (markers.has(parts[i])) {
-        const id = parts[i + 1];
-        return /^[a-zA-Z0-9_-]{11}$/.test(id) ? id : null;
-      }
-    }
-
-    const last = parts[parts.length - 1];
-    return /^[a-zA-Z0-9_-]{11}$/.test(last) ? last : null;
-  } catch {
-    return null;
-  }
+  // YouTube IDs are exactly 11 characters long
+  return (match && match[2].length === 11) ? match[2] : null;
 };
 
 const CourseDetail = () => {
@@ -106,7 +73,7 @@ const CourseDetail = () => {
   const {
     data: lecturesData,
     isLoading: lecturesLoading,
-    isError: lecturesError, 
+    isError: lecturesError,
   } = useGetCourseLecturesQuery(courseId);
 
   const course = courseData?.course;
@@ -424,23 +391,21 @@ const CourseDetail = () => {
                             }
                             setSelectedLecture(lecture);
                           }}
-                          className={`p-5 transition-all duration-200 border-l-4 ${
-                            isSelected
+                          className={`p-5 transition-all duration-200 border-l-4 ${isSelected
                               ? "bg-blue-50 dark:bg-blue-900/20 border-blue-600"
                               : canWatch
-                              ? "border-transparent hover:bg-slate-50 dark:hover:bg-gray-800/50 cursor-pointer"
-                              : "border-transparent opacity-60 cursor-not-allowed bg-slate-50/50 dark:bg-gray-900/50"
-                          }`}
+                                ? "border-transparent hover:bg-slate-50 dark:hover:bg-gray-800/50 cursor-pointer"
+                                : "border-transparent opacity-60 cursor-not-allowed bg-slate-50/50 dark:bg-gray-900/50"
+                            }`}
                         >
                           <div className="flex items-center gap-4">
                             <div
-                              className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-colors ${
-                                isSelected
+                              className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-colors ${isSelected
                                   ? "bg-blue-600 text-white shadow-lg shadow-blue-200 dark:shadow-none"
                                   : canWatch
-                                  ? "bg-slate-200 dark:bg-gray-700 text-slate-700 dark:text-gray-300"
-                                  : "bg-slate-200 dark:bg-gray-800 text-slate-400"
-                              }`}
+                                    ? "bg-slate-200 dark:bg-gray-700 text-slate-700 dark:text-gray-300"
+                                    : "bg-slate-200 dark:bg-gray-800 text-slate-400"
+                                }`}
                             >
                               {canWatch ? (
                                 <PlayCircle className="w-6 h-6 ml-0.5" />
@@ -451,11 +416,10 @@ const CourseDetail = () => {
 
                             <div className="flex-1 min-w-0">
                               <p
-                                className={`text-base font-bold ${
-                                  isSelected
+                                className={`text-base font-bold ${isSelected
                                     ? "text-blue-700 dark:text-blue-300"
                                     : "text-slate-900 dark:text-gray-100"
-                                }`}
+                                  }`}
                               >
                                 {index + 1}. {lecture.lectureTitle}
                               </p>
@@ -511,9 +475,8 @@ const CourseDetail = () => {
                     >
                       {showAllLectures ? "Show Less" : `View All ${lectures.length} Lessons`}
                       <ChevronDown
-                        className={`w-5 h-5 transition-transform duration-300 ${
-                          showAllLectures ? "rotate-180" : ""
-                        }`}
+                        className={`w-5 h-5 transition-transform duration-300 ${showAllLectures ? "rotate-180" : ""
+                          }`}
                       />
                     </button>
                   )}

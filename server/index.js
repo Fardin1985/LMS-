@@ -31,10 +31,11 @@ const io = new Server(httpServer, {
 
 // --- GLOBAL MIDDLEWARE (Order is CRITICAL) ---
 
-// 1. Handle CORS First
 app.use(cors({
-  origin: 'http://localhost:5173', 
-  credentials: true
+    origin: ["http://localhost:5173", "https://lms-lac-zeta.vercel.app"], // ✅ Added your Vercel URL
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
 // 2. Parse JSON bodies

@@ -63,6 +63,22 @@ export const courseApi = createApi({
       }),
       providesTags: ["Course"],
     }),
+    // Add this right under getCourseById
+    enrollCourse: builder.mutation({
+      query: (courseId) => ({
+        url: `/${courseId}/enroll`,
+        method: "POST",
+      }),
+      // Invalidate so the UI instantly updates the button to "Enrolled"
+      invalidatesTags: ["Course", "User"], 
+    }),
+    getEnrolledCourses: builder.query({
+      query: () => ({
+        url: "/enrolled-courses",
+        method: "GET",
+      }),
+      providesTags: ["Course", "User"], 
+    }),
 
     // ----------------------------------------------------
     // 🎥 LECTURE ENDPOINTS
@@ -113,5 +129,7 @@ export const {
   useCreateLectureMutation,
   useGetCourseLecturesQuery,
   useEditLectureMutation,
-  useRemoveLectureMutation
+  useRemoveLectureMutation,
+  useEnrollCourseMutation,
+  useGetEnrolledCoursesQuery
 } = courseApi;

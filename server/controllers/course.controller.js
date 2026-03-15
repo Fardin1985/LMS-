@@ -1,6 +1,7 @@
 import { Course } from "../models/course.model.js";
 import { uploadMedia, deleteMediaFromCloudinary } from "../utils/cloudinary.js";
 import fs from "fs";
+import User from "../models/user.model.js";
 
 // 1. CREATE A NEW COURSE (Fully Loaded)
 export const createCourse = async (req, res) => {
@@ -109,6 +110,7 @@ export const getCreatorCourses = async (req, res) => {
         });
     }
 };
+
 export const editCourse = async (req, res) => {
     try {
         const courseId = req.params.courseId;
@@ -196,6 +198,7 @@ export const editCourse = async (req, res) => {
         return res.status(500).json({ success: false, message: "Failed to update course" });
     }
 };
+
 // 4. DELETE A COURSE
 export const deleteCourse = async (req, res) => {
     try {
@@ -279,5 +282,70 @@ export const getCourseById = async (req, res) => {
     } catch (error) {
         console.error("Error in getCourseById:", error);
         return res.status(500).json({ success: false, message: "Failed to fetch course details" });
+    }
+};
+
+export const enrollCourse = async (req, res) => {
+    try {
+        const { courseId } = req.params;
+        const userId = req.id; // From your isAuthenticated middleware
+
+        const user = await User.findById(userId);
+        const course = await Course.findById(courseId);
+
+        if (!course) {
+            return res.status(404).json({ success: false, message: "Course not found!" });
+        }
+
+        // Check if already enrolled to prevent duplicates
+        if (user.enrolledCourses.includes(courseId)) {
+            return res.status(400).json({ success: false, message: "You are already enrolled!" });
+        }
+
+        // Add to User's enrolled array
+        user.enrolledCourses.push(courseId);
+        await user.save();
+
+        // Optional: If your Course model tracks students, add them there too
+        if (course.enrolledStudents && !course.enrolledStudents.includes(userId)) {
+            course.enrolledStudents.push(userId);
+            await course.save();
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Successfully enrolled! Welcome to the course.",
+        });
+
+    } catch (error) {
+        console.error("Enrollment error:", error);
+        return res.status(500).json({ success: false, message: "Failed to enroll in course." });
+    }
+};
+
+// 👇 ADDED THIS ONE FUNCTION AT THE VERY END (No other changes made)
+export const getEnrolledCourses = async (req, res) => {
+    try {
+        const userId = req.id; // From your isAuthenticated middleware
+
+        const user = await User.findById(userId).populate({
+            path: "enrolledCourses",
+            populate: {
+                path: "creator",
+                select: "name photoUrl"
+            }
+        });
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+
+        return res.status(200).json({
+            success: true,
+            enrolledCourses: user.enrolledCourses,
+        });
+    } catch (error) {
+        console.error("Error fetching enrolled courses:", error);
+        return res.status(500).json({ success: false, message: "Failed to fetch enrolled courses" });
     }
 };

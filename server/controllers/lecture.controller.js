@@ -55,84 +55,72 @@ export const getCourseLectures = async (req, res) => {
         return res.status(500).json({ success: false, message: "Failed to fetch lectures" });
     }
 };
-
-// 3. EDIT LECTURE (Handles YouTube, MP4 Video, and PDF Notes)
 export const editLecture = async (req, res) => {
     try {
-        const { lectureTitle, isPreviewFree, videoUrl } = req.body; // videoUrl here would be a YouTube link from the frontend
-        const { courseId, lectureId } = req.params;
+        const { lectureId } = req.params;
+        const { lectureTitle, isPreviewFree, videoType, youtubeUrl } = req.body;
 
         const lecture = await Lecture.findById(lectureId);
         if (!lecture) {
+            // Safety: clean up temp files if lecture doesn't exist
+            if (req.files?.videoFile) fs.unlinkSync(req.files.videoFile[0].path);
+            if (req.files?.notesFile) fs.unlinkSync(req.files.notesFile[0].path);
             return res.status(404).json({ success: false, message: "Lecture not found" });
         }
 
-        // 1. Update basic text fields
+        // 1. Update basic text
         if (lectureTitle) lecture.lectureTitle = lectureTitle;
         if (isPreviewFree !== undefined) lecture.isPreviewFree = isPreviewFree === 'true';
 
-        // 2. Handle YouTube Link Submission
-        // If the frontend sends a string in 'videoUrl', it's a YouTube link.
-        if (videoUrl && typeof videoUrl === 'string') {
-            // If they are replacing an old Cloudinary video with a YouTube link, delete the old Cloudinary video to save space!
+        // 2. Handle Video Updates safely
+        if (videoType === 'youtube' && youtubeUrl) {
+            // Switched to YouTube: Delete old Cloudinary video
             if (lecture.publicId) {
-                await deleteMediaFromCloudinary(lecture.publicId);
-                lecture.publicId = ""; // Clear the publicId since YouTube doesn't use it
+                await deleteMediaFromCloudinary(lecture.publicId, "video");
+                lecture.publicId = null;
             }
-            lecture.videoUrl = videoUrl;
+            lecture.videoUrl = youtubeUrl;
+        } else if (req.files?.videoFile) {
+            // Uploaded new Video: Delete old Cloudinary video, then upload new one
+            if (lecture.publicId) {
+                await deleteMediaFromCloudinary(lecture.publicId, "video");
+            }
+            const videoPath = req.files.videoFile[0].path;
+            const uploadResponse = await uploadMedia(videoPath);
+            
+            lecture.videoUrl = uploadResponse.secure_url;
+            lecture.publicId = uploadResponse.public_id;
+            fs.unlinkSync(videoPath); // Clear from server hard drive
         }
 
-        // 3. Handle Cloudinary File Uploads (Video & Notes)
-        // Because we used upload.fields(), files are now inside req.files object
-        if (req.files) {
+        // 3. Handle PDF Notes Updates safely
+        if (req.files?.notesFile) {
+            if (lecture.notesPublicId) {
+                await deleteMediaFromCloudinary(lecture.notesPublicId, "raw"); // PDFs are usually 'raw' or 'auto'
+            }
+            const notesPath = req.files.notesFile[0].path;
+            const uploadResponse = await uploadMedia(notesPath);
             
-            // --- A. Upload MP4 Video ---
-            if (req.files.video && req.files.video[0]) {
-                const videoFile = req.files.video[0];
-                
-                // Delete old video if exists
-                if (lecture.publicId) {
-                    await deleteMediaFromCloudinary(lecture.publicId);
-                }
-
-                const uploadResponse = await uploadMedia(videoFile.path);
-                lecture.videoUrl = uploadResponse.secure_url;
-                lecture.publicId = uploadResponse.public_id;
-                
-                fs.unlinkSync(videoFile.path); // clean up temp file
-            }
-
-            // --- B. Upload PDF Notes ---
-            if (req.files.notes && req.files.notes[0]) {
-                const notesFile = req.files.notes[0];
-                
-                // Delete old notes if exists
-                if (lecture.notesPublicId) {
-                    await deleteMediaFromCloudinary(lecture.notesPublicId);
-                }
-
-                // Make sure your Cloudinary upload utility allows "raw" or "auto" resource types to accept PDFs!
-                const uploadResponse = await uploadMedia(notesFile.path);
-                lecture.notesUrl = uploadResponse.secure_url;
-                lecture.notesPublicId = uploadResponse.public_id;
-                
-                fs.unlinkSync(notesFile.path); // clean up temp file
-            }
+            lecture.notesUrl = uploadResponse.secure_url;
+            lecture.notesPublicId = uploadResponse.public_id;
+            fs.unlinkSync(notesPath); // Clear from server hard drive
         }
 
         await lecture.save();
 
         return res.status(200).json({
             success: true,
-            message: "Lecture updated successfully",
-            lecture,
+            message: "Lecture updated successfully!",
+            lecture
         });
+
     } catch (error) {
-        console.error("Error editing lecture:", error);
-        return res.status(500).json({ success: false, message: "Failed to edit lecture" });
+        console.error("Edit Lecture Error:", error);
+        if (req.files?.videoFile) fs.unlinkSync(req.files.videoFile[0].path);
+        if (req.files?.notesFile) fs.unlinkSync(req.files.notesFile[0].path);
+        return res.status(500).json({ success: false, message: "Failed to update lecture" });
     }
 };
-
 // 4. DELETE LECTURE
 export const removeLecture = async (req, res) => {
     try {

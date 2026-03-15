@@ -349,3 +349,26 @@ export const getEnrolledCourses = async (req, res) => {
         return res.status(500).json({ success: false, message: "Failed to fetch enrolled courses" });
     }
 };
+export const unenrollFromCourse = async (req, res) => {
+    try {
+        const { courseId } = req.params;
+        const userId = req.id; // From your auth middleware
+
+        // 1. Remove user from the Course's list
+        await Course.findByIdAndUpdate(courseId, {
+            $pull: { enrolledStudents: userId }
+        });
+
+        // 2. Remove course from the User's list
+        await User.findByIdAndUpdate(userId, {
+            $pull: { enrolledCourses: courseId }
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: "Unenrolled successfully"
+        });
+    } catch (error) {
+        return res.status(500).json({ message: "Failed to unenroll" });
+    }
+};

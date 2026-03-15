@@ -4,13 +4,13 @@ export const courseApi = createApi({
   reducerPath: "courseApi",
   baseQuery: fetchBaseQuery({
     // 👇 Dynamically switch between local and live server!
-    baseUrl: import.meta.env.MODE === 'development' 
-        ? "http://localhost:5000/api/v1/course" 
-        : "https://lms-z693.onrender.com/api/v1/course",
+    baseUrl: import.meta.env.MODE === 'development'
+      ? "http://localhost:5000/api/v1/course"
+      : "https://lms-z693.onrender.com/api/v1/course",
     credentials: "include",
   }),
   // 👇 Added "EnrolledCourses" tag so the dashboard auto-updates!
-  tagTypes: ["Course", "CourseLectures", "EnrolledCourses"], 
+  tagTypes: ["Course", "CourseLectures", "EnrolledCourses"],
 
   endpoints: (builder) => ({
 
@@ -38,7 +38,7 @@ export const courseApi = createApi({
       query: ({ courseId, data }) => ({
         url: `/${courseId}`,
         method: "PUT",
-        body: data,                   
+        body: data,
       }),
       invalidatesTags: ["Course"],
     }),
@@ -73,13 +73,13 @@ export const courseApi = createApi({
         method: "POST",
       }),
       // 👇 Invalidates EnrolledCourses so Dashboard updates instantly!
-      invalidatesTags: ["Course", "EnrolledCourses"], 
+      invalidatesTags: ["Course", "EnrolledCourses"],
     }),
 
     // 👈 FIXED TYPO: Changed etEnrolledCourses to getEnrolledCourses
     getEnrolledCourses: builder.query({
       query: () => ({
-        url: "/enrolled-courses", 
+        url: "/enrolled-courses",
         method: "GET",
       }),
       providesTags: ["EnrolledCourses"], // 👈 Attaches the tag to this query
@@ -91,11 +91,11 @@ export const courseApi = createApi({
 
     createLecture: builder.mutation({
       query: ({ courseId, lectureTitle }) => ({
-        url: `../lecture/${courseId}`, 
+        url: `../lecture/${courseId}`,
         method: "POST",
         body: { lectureTitle },
       }),
-      invalidatesTags: ["CourseLectures", "Course"], 
+      invalidatesTags: ["CourseLectures", "Course"],
     }),
 
     getCourseLectures: builder.query({
@@ -110,6 +110,13 @@ export const courseApi = createApi({
         body: data,
       }),
       invalidatesTags: ["CourseLectures", "Course"],
+    }),
+    unenrollCourse: builder.mutation({
+      query: (courseId) => ({
+        url: `/${courseId}/unenroll`, // ✅ matches backend
+        method: "DELETE",
+      }),
+      invalidatesTags: ["EnrolledCourses", "Course"], // ✅ optional but useful
     }),
 
     removeLecture: builder.mutation({
@@ -134,5 +141,7 @@ export const {
   useEditLectureMutation,
   useRemoveLectureMutation,
   useEnrollCourseMutation,
-  useGetEnrolledCoursesQuery, // 👈 Successfully exported!
+  useGetEnrolledCoursesQuery,
+  useUnenrollCourseMutation,
+  // 👈 Successfully exported!
 } = courseApi;

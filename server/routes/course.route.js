@@ -1,14 +1,16 @@
 import express from "express";
 import {
-    createCourse,
-    editCourse,
-    getCreatorCourses,
-    deleteCourse,
-    getPublishedCourses,
-    getCourseById,
-    enrollCourse,
-    getEnrolledCourses // 👈 Added this to your imports
+  createCourse,
+  editCourse,
+  getCreatorCourses,
+  deleteCourse,
+  getPublishedCourses,
+  getCourseById,
+  enrollCourse,
+  getEnrolledCourses,
+  unenrollFromCourse, // ✅ add this
 } from "../controllers/course.controller.js";
+
 import isAuthenticated from "../middleware/isAuthenticated.js";
 import upload from "../utils/multer.js";
 
@@ -16,30 +18,28 @@ const router = express.Router();
 
 router.get("/published", getPublishedCourses);
 
-// 👇 ADDED THIS ROUTE HERE. It MUST be placed above `/:courseId` so it doesn't crash.
+// enrolled list
 router.get("/enrolled-courses", isAuthenticated, getEnrolledCourses);
 
+// course details
 router.route("/:courseId").get(getCourseById);
 
-// 👇 CRITICAL FIX: Added upload.single("courseThumbnail") here!
-router.post(
-    "/",
-    isAuthenticated,
-    upload.single("courseThumbnail"),
-    createCourse
-);
+// create
+router.post("/", isAuthenticated, upload.single("courseThumbnail"), createCourse);
+
+// enroll
 router.post("/:courseId/enroll", isAuthenticated, enrollCourse);
 
-// Get all courses created by the logged-in instructor
+// ✅ unenroll (student removes from dashboard)
+router.delete("/:courseId/unenroll", isAuthenticated, unenrollFromCourse);
+
+// creator list
 router.get("/", isAuthenticated, getCreatorCourses);
+
+// delete course (creator)
 router.delete("/:courseId", isAuthenticated, deleteCourse);
 
-// Edit a course & upload a thumbnail
-router.put(
-    "/:courseId",
-    isAuthenticated,
-    upload.single("courseThumbnail"),
-    editCourse
-);
+// edit (creator)
+router.put("/:courseId", isAuthenticated, upload.single("courseThumbnail"), editCourse);
 
 export default router;

@@ -10,7 +10,6 @@ import CourseDetail from "./pages/students/CourseDetail";
 // ✅ 1. Import the query hook and a loading icon
 import { useGetProfileQuery } from "./features/api/authApi"; // Adjust this path if your authApi is in a different folder
 import { Loader2 } from "lucide-react";
-
 function App() {
   // ✅ 2. Fire the query the moment the app starts
   const { isLoading } = useGetProfileQuery();
@@ -36,8 +35,6 @@ function App() {
 
           {/* Courses Page shows ONLY when URL is "/courses" */}
           <Route path="/courses" element={<Courses />} />
-
-          {/* My Learning shows ONLY when URL is "/my-learning" */}
           <Route path="/my-learning" element={<MyLearning />} />
           {/* Student Dashboard shows ONLY when URL is "/dashboard" */}
           <Route path="/student/dashboard" element={<StudentDashboard />} />

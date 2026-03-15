@@ -1,33 +1,61 @@
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { 
-  Edit, 
-  BookOpen, 
-  PlayCircle, 
-  Loader2, 
-  GraduationCap, 
-  Flame, 
-  AlertCircle
+
+import {
+  Edit,
+  BookOpen,
+  PlayCircle,
+  Loader2,
+  GraduationCap,
+  Flame,
+  AlertCircle,
+  Trash2,
 } from "lucide-react";
+
 import EditProfileDialog from "../../components/EditProfileDialog";
-import { useGetEnrolledCoursesQuery } from "@/features/api/courseApi";
+import {
+  useGetEnrolledCoursesQuery,
+  useUnenrollCourseMutation,
+} from "@/features/api/courseApi";
 
 const StudentDashboard = () => {
   const navigate = useNavigate();
   const { user } = useSelector((store) => store.auth);
   const [showEditProfile, setShowEditProfile] = useState(false);
 
-  // 🔌 Fetching real enrolled courses from your backend
+  // 🔌 Fetch enrolled courses
   const { data, isLoading, isError, refetch } = useGetEnrolledCoursesQuery();
-  
+
   const enrolledCourses = data?.enrolledCourses || [];
   const totalCourses = enrolledCourses.length;
+
+  const [unenrollCourse, { isLoading: isUnenrolling }] =
+    useUnenrollCourseMutation();
+
+  const handleUnenroll = async (courseId) => {
+    const ok = window.confirm(
+      "Are you sure you want to remove this course from your library?"
+    );
+    if (!ok) return;
+
+    try {
+      await unenrollCourse(courseId).unwrap();
+      toast.success("Course removed successfully");
+      // No manual refetch needed if your mutation invalidates "EnrolledCourses"
+      // but if it doesn't, you can uncomment:
+      // refetch();
+    } catch (error) {
+      toast.error(error?.data?.message || "Failed to remove course");
+    }
+  };
 
   // 1. Loading State
   if (isLoading) {
@@ -35,7 +63,9 @@ const StudentDashboard = () => {
       <div className="min-h-screen flex items-center justify-center dark:bg-[#020817]">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-12 w-12 animate-spin text-blue-600" />
-          <p className="text-gray-500 animate-pulse">Loading your learning journey...</p>
+          <p className="text-gray-500 animate-pulse">
+            Loading your learning journey...
+          </p>
         </div>
       </div>
     );
@@ -48,8 +78,13 @@ const StudentDashboard = () => {
         <Card className="max-w-md w-full p-8 text-center space-y-4 border-red-100 dark:border-red-900/30">
           <AlertCircle className="h-12 w-12 text-red-500 mx-auto" />
           <h2 className="text-xl font-bold">Failed to load courses</h2>
-          <p className="text-gray-500 text-sm">There was an issue connecting to the server. Please check your internet or log in again.</p>
-          <Button onClick={() => refetch()} variant="outline" className="w-full">Try Again</Button>
+          <p className="text-gray-500 text-sm">
+            There was an issue connecting to the server. Please check your
+            internet or log in again.
+          </p>
+          <Button onClick={() => refetch()} variant="outline" className="w-full">
+            Try Again
+          </Button>
         </Card>
       </div>
     );
@@ -58,7 +93,6 @@ const StudentDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-[#020817] pt-20 pb-20 px-4 sm:px-6">
       <div className="max-w-6xl mx-auto space-y-8">
-
         {/* ─── PROFILE CARD ─────────────────────────────────────────── */}
         <Card className="border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm bg-white dark:bg-gray-900">
           <div className="h-24 relative overflow-hidden bg-gradient-to-r from-gray-900 via-blue-950 to-gray-900">
@@ -75,7 +109,10 @@ const StudentDashboard = () => {
             <div className="flex flex-col md:flex-row items-center md:items-end gap-5">
               <div className="relative shrink-0">
                 <Avatar className="h-24 w-24 md:h-28 md:w-28 border-4 border-white dark:border-gray-900 shadow-lg">
-                  <AvatarImage src={user?.photoUrl || "https://github.com/shadcn.png"} className="object-cover" />
+                  <AvatarImage
+                    src={user?.photoUrl || "https://github.com/shadcn.png"}
+                    className="object-cover"
+                  />
                   <AvatarFallback className="text-3xl font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400">
                     {user?.name?.[0]?.toUpperCase()}
                   </AvatarFallback>
@@ -92,13 +129,15 @@ const StudentDashboard = () => {
                     {user?.role || "Student"}
                   </Badge>
                 </div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">{user?.email}</p>
-                
-                {/* Simplified stats for the profile header */}
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {user?.email}
+                </p>
+
                 <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 mt-3 text-sm font-medium text-gray-600 dark:text-gray-300">
                   <span className="flex items-center gap-1.5 bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full">
-                    <BookOpen className="w-4 h-4 text-blue-500" /> 
-                    {totalCourses} {totalCourses === 1 ? "Course" : "Courses"} Enrolled
+                    <BookOpen className="w-4 h-4 text-blue-500" />
+                    {totalCourses} {totalCourses === 1 ? "Course" : "Courses"}{" "}
+                    Enrolled
                   </span>
                 </div>
               </div>
@@ -116,20 +155,51 @@ const StudentDashboard = () => {
           </CardContent>
         </Card>
 
-        {/* ─── STATS ROW (Cleaned up, removed progress) ──────────────── */}
+        {/* ─── STATS ROW ─────────────────────────────────────────────── */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {[
-            { label: "My Library", value: totalCourses, sub: "Enrolled Courses", icon: BookOpen, iconBg: "bg-blue-100 dark:bg-blue-900/30", iconColor: "text-blue-600 dark:text-blue-400", accent: "border-l-blue-500" },
-            { label: "Account Status", value: "Active", sub: "Ready to learn", icon: Flame, iconBg: "bg-orange-100 dark:bg-orange-900/30", iconColor: "text-orange-500 dark:text-orange-400", accent: "border-l-orange-500" },
-            { label: "Current Role", value: user?.role === "instructor" ? "Instructor" : "Student", sub: "Platform Member", icon: GraduationCap, iconBg: "bg-green-100 dark:bg-green-900/30", iconColor: "text-green-600 dark:text-green-400", accent: "border-l-green-500" },
+            {
+              label: "My Library",
+              value: totalCourses,
+              sub: "Enrolled Courses",
+              icon: BookOpen,
+              iconBg: "bg-blue-100 dark:bg-blue-900/30",
+              iconColor: "text-blue-600 dark:text-blue-400",
+              accent: "border-l-blue-500",
+            },
+            {
+              label: "Account Status",
+              value: "Active",
+              sub: "Ready to learn",
+              icon: Flame,
+              iconBg: "bg-orange-100 dark:bg-orange-900/30",
+              iconColor: "text-orange-500 dark:text-orange-400",
+              accent: "border-l-orange-500",
+            },
+            {
+              label: "Current Role",
+              value: user?.role === "instructor" ? "Instructor" : "Student",
+              sub: "Platform Member",
+              icon: GraduationCap,
+              iconBg: "bg-green-100 dark:bg-green-900/30",
+              iconColor: "text-green-600 dark:text-green-400",
+              accent: "border-l-green-500",
+            },
           ].map(({ label, value, sub, icon: Icon, iconBg, iconColor, accent }) => (
-            <div key={label} className={`bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 border-l-4 ${accent} rounded-2xl p-6 shadow-sm flex items-center gap-5 hover:shadow-md transition-shadow`}>
+            <div
+              key={label}
+              className={`bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 border-l-4 ${accent} rounded-2xl p-6 shadow-sm flex items-center gap-5 hover:shadow-md transition-shadow`}
+            >
               <div className={`w-14 h-14 rounded-xl ${iconBg} flex items-center justify-center shrink-0`}>
                 <Icon className={`w-7 h-7 ${iconColor}`} />
               </div>
               <div>
-                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">{label}</p>
-                <h3 className="text-xl font-extrabold text-gray-900 dark:text-white mt-0.5 capitalize">{value}</h3>
+                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                  {label}
+                </p>
+                <h3 className="text-xl font-extrabold text-gray-900 dark:text-white mt-0.5 capitalize">
+                  {value}
+                </h3>
                 <p className="text-xs text-gray-400 mt-1">{sub}</p>
               </div>
             </div>
@@ -144,8 +214,12 @@ const StudentDashboard = () => {
                 <BookOpen className="w-4 h-4 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <h2 className="text-xl font-extrabold text-gray-900 dark:text-white">My Learning</h2>
-                <p className="text-xs text-gray-500 mt-0.5">Pick up where you left off</p>
+                <h2 className="text-xl font-extrabold text-gray-900 dark:text-white">
+                  My Learning
+                </h2>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Pick up where you left off
+                </p>
               </div>
             </div>
           </div>
@@ -156,10 +230,17 @@ const StudentDashboard = () => {
                 <BookOpen className="h-8 w-8 text-gray-400" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white">No courses yet</h3>
-                <p className="text-sm text-gray-500 mt-1">Browse our catalog and start your first course today.</p>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                  No courses yet
+                </h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  Browse our catalog and start your first course today.
+                </p>
               </div>
-              <Button onClick={() => navigate("/")} className="rounded-full px-8 bg-blue-600 hover:bg-blue-700">
+              <Button
+                onClick={() => navigate("/")}
+                className="rounded-full px-8 bg-blue-600 hover:bg-blue-700"
+              >
                 Explore Courses
               </Button>
             </div>
@@ -173,8 +254,11 @@ const StudentDashboard = () => {
                 >
                   <div className="relative h-44 overflow-hidden bg-gray-100 dark:bg-gray-800 shrink-0">
                     <img
-                      // Handles both object layout and string layout for thumbnails
-                      src={course.courseThumbnail?.photoUrl || course.courseThumbnail || "https://images.unsplash.com/photo-1633356122544-f134324a6cee?q=80&w=800"}
+                      src={
+                        course.courseThumbnail?.photoUrl ||
+                        course.courseThumbnail ||
+                        "https://images.unsplash.com/photo-1633356122544-f134324a6cee?q=80&w=800"
+                      }
                       alt={course.courseTitle}
                       className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
                     />
@@ -190,24 +274,46 @@ const StudentDashboard = () => {
                         {course.courseTitle}
                       </h3>
                       <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 flex items-center gap-1.5">
-                        Instructor: <span className="font-medium text-gray-700 dark:text-gray-300">{course.creator?.name || "Unknown"}</span>
+                        Instructor:{" "}
+                        <span className="font-medium text-gray-700 dark:text-gray-300">
+                          {course.creator?.name || "Unknown"}
+                        </span>
                       </p>
                     </div>
 
-                    {/* Spacer to push the button to the bottom */}
-                    <div className="flex-grow"></div>
+                    <div className="flex-grow" />
+
                     <Separator className="my-4 dark:bg-gray-800" />
 
+                    {/* ✅ Primary action */}
                     <Button
                       className="w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white gap-2 font-semibold shadow-sm transition-all hover:scale-[1.02]"
                       onClick={(e) => {
                         e.stopPropagation();
-                        // This links to your actual player/viewer route!
                         navigate(`/course/${course._id}`);
                       }}
                     >
                       <PlayCircle className="w-5 h-5" />
                       Start Learning
+                    </Button>
+
+                    {/* ✅ Remove/Unenroll action */}
+                    <Button
+                      variant="outline"
+                      className="w-full rounded-xl mt-3 gap-2 font-semibold border-gray-200 dark:border-gray-700 hover:border-red-300 dark:hover:border-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400"
+                      disabled={isUnenrolling}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleUnenroll(course._id);
+                      }}
+                      title="Remove this course from your library"
+                    >
+                      {isUnenrolling ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-4 h-4" />
+                      )}
+                      Remove Course
                     </Button>
                   </CardContent>
                 </Card>

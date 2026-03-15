@@ -10,12 +10,12 @@ const generateToken = (res, user, message) => {
   });
 
   // Set JWT cookie
-  res.cookie('token', token, {
+ res.cookie("token", token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: 24 * 60 * 60 * 1000, // 1 day
-    sameSite: 'strict' 
-  });
+    sameSite: "none", // 👈 Required for cross-site cookies
+    secure: true,     // 👈 Required for SameSite=None
+    maxAge: 24 * 60 * 60 * 1000
+});
 
   // Send the final response to the frontend
   return res.status(200).json({
